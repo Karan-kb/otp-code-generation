@@ -16,6 +16,9 @@ Route::get('/home', [HomeController::class, 'showHome'])->name('home');
 Route::post('/verify', [HomeController::class, 'verify'])->name('verify_phone_otp');
 Route::get('/verify', [HomeController::class, 'showVerifyPhoneOtp'])->name('show_verify_phone_otp');
 
+Route::get('/verify/{phone}', [HomeController::class, 'showVerifyPhoneOtp'])->name('show_verify_phone_otp');
+
+
 Route::get('/register', function () {
     return view('auth.register');
 })->name('register');
