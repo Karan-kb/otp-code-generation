@@ -37,7 +37,7 @@
 
                             <div class="form-group row mb-0">
                                 <div class="col-md-6 offset-md-4">
-                                    <button type="submit" class="btn btn-primary">
+                                    <button type="submit" class="btn btn-primary" id="verify-btn"{{ $remainingTime <= 0 ? ' disabled' : '' }}>
                                         {{ __('Verify') }}
                                     </button>
                                 </div>
@@ -49,37 +49,9 @@
                                         <p>Remaining Time: <span id="countdown">{{ gmdate('i:s', $remainingTime) }}</span></p>
                                     </div>
                                 </div>
-                                <script>
-                                    var remainingTime = {{ $remainingTime }};
+                            @endif
 
-                                    if (remainingTime > 0) {
-                                        var countdownInterval = setInterval(function() {
-                                            remainingTime--;
-                                            document.getElementById('countdown').innerHTML = formatTime(remainingTime);
-
-                                            if (remainingTime <= 0) {
-                                                clearInterval(countdownInterval);
-                                                document.getElementById('countdown').style.display = 'none';
-                                            }
-                                        }, 1000);
-                                    }
-
-                                    function formatTime(time) {
-                                        var minutes = Math.floor(time / 60).toString().padStart(2, '0');
-                                        var seconds = (time % 60).toString().padStart(2, '0');
-                                        return minutes + ':' + seconds;
-                                    }
-
-                                    document.getElementById('verify-form').addEventListener('submit', function(event) {
-                                        if (remainingTime > 0) {
-                                            event.preventDefault();
-                                            clearInterval(countdownInterval);
-                                            document.getElementById('countdown').style.display = 'none';
-                                            document.getElementById('verify-form').submit();
-                                        }
-                                    });
-                                </script>
-                            @else
+                            @if ($remainingTime <= 0)
                                 <div class="form-group row mt-3">
                                     <div class="col-md-6 offset-md-4">
                                         <p>The remaining time has expired. Please request a new OTP.</p>
@@ -92,4 +64,33 @@
             </div>
         </div>
     </div>
+
+    @if ($remainingTime > 0)
+        <script>
+            var remainingTime = {{ $remainingTime }};
+            var countdownElement = document.getElementById('countdown');
+            var verifyButton = document.getElementById('verify-btn');
+
+            var countdownInterval = setInterval(function() {
+                remainingTime--;
+                countdownElement.innerHTML = formatTime(remainingTime);
+
+                if (remainingTime <= 0) {
+                    clearInterval(countdownInterval);
+                    countdownElement.style.display = 'none';
+                    verifyButton.disabled = true;
+                }
+            }, 1000);
+
+            function formatTime(time) {
+                var minutes = Math.floor(time / 60);
+                var seconds = time % 60;
+                return padNumber(minutes) + ":" + padNumber(seconds);
+            }
+
+            function padNumber(number) {
+                return (number < 10 ? "0" : "") + number;
+            }
+        </script>
+    @endif
 @endsection
