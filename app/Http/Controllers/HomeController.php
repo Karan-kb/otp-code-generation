@@ -1,6 +1,10 @@
 <?php
 namespace App\Http\Controllers;
 
+use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\Artisan;
+
+
 use App\Models\PhoneNumber;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -8,6 +12,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Support\Facades\DB;
 
 class HomeController extends Controller
 {
@@ -25,10 +30,11 @@ class HomeController extends Controller
             $phone_number = new PhoneNumber;
             $phone_number->phone = $validatedData['phone'];
             $phone_number->otp = $this->generateOTP();
-            $phone_number->valid_until = now()->addMinutes(1); // Set the OTP expiration time
-            $phone_number->save();
 
-            // Perform any action to send the OTP to the user's phone
+            $expirationTime = Carbon::now()->addDay();
+            $phone_number->valid_until = $expirationTime;
+
+            $phone_number->save();
 
             return redirect()->route('verify_phone_otp', ['phone' => $validatedData['phone']]);
         }
@@ -38,7 +44,6 @@ class HomeController extends Controller
 
     private function generateOTP()
     {
-        // Generate a 6-digit OTP
         return rand(100000, 999999);
     }
 
@@ -57,28 +62,15 @@ class HomeController extends Controller
             ->first();
 
         if ($phone_number) {
-            if ($phone_number->otp == $otp) {
-                // Phone and OTP match
+            if ($phone_number->otp == $otp && $phone_number->valid_until >= Carbon::now()) {
                 return redirect()->route('register');
             } else {
-                // Phone and OTP do not match
-                if ($phone_number->valid_until >= Carbon::now()) {
-                    // OTP is still valid, show the remaining time
-                    $validUntil = Carbon::parse($phone_number->valid_until);
-                    $remainingTime = max(0, $validUntil->diffInSeconds(Carbon::now()));
-                } else {
-                    // OTP has expired, remove the remaining time
-                    $remainingTime = 0;
-                }
-
                 return back()
                     ->withErrors(['otp' => 'Invalid OTP'])
-                    ->withInput(['phone' => $phone])
-                    ->with('remainingTime', $remainingTime);
+                    ->withInput(['phone' => $phone]);
             }
         }
 
-        // Phone number not found
         return back()
             ->withErrors(['otp' => 'Invalid OTP'])
             ->withInput(['phone' => $phone]);
@@ -106,12 +98,19 @@ class HomeController extends Controller
         $validUntil = Carbon::parse($phone_number->valid_until);
         $remainingTime = max(0, $validUntil->diffInSeconds(Carbon::now()));
 
-        $errors = $request->session()->get('errors');
-
         if ($remainingTime <= 0) {
+            $phone_number->delete();
             $remainingTime = 0;
         }
 
+        $errors = $request->session()->get('errors');
+
         return view('verify_phone_otp', compact('remainingTime', 'phone', 'errors'));
+    }
+
+    // New method to invalidate expired OTPs
+    public function invalidateExpiredOtps()
+    {
+        DB::table('phone_numbers')->where('valid_until', '<', Carbon::now())->delete();
     }
 }

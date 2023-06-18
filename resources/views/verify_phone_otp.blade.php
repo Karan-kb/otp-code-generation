@@ -37,60 +37,15 @@
 
                             <div class="form-group row mb-0">
                                 <div class="col-md-6 offset-md-4">
-                                    <button type="submit" class="btn btn-primary" id="verify-btn"{{ $remainingTime <= 0 ? ' disabled' : '' }}>
+                                    <button type="submit" class="btn btn-primary" id="verify-btn">
                                         {{ __('Verify') }}
                                     </button>
                                 </div>
                             </div>
-
-                            @if ($remainingTime > 0)
-                                <div class="form-group row mt-3">
-                                    <div class="col-md-6 offset-md-4">
-                                        <p>Remaining Time: <span id="countdown">{{ gmdate('i:s', $remainingTime) }}</span></p>
-                                    </div>
-                                </div>
-                            @endif
-
-                            @if ($remainingTime <= 0)
-                                <div class="form-group row mt-3">
-                                    <div class="col-md-6 offset-md-4">
-                                        <p>The remaining time has expired. Please request a new OTP.</p>
-                                    </div>
-                                </div>
-                            @endif
                         </form>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    @if ($remainingTime > 0)
-        <script>
-            var remainingTime = {{ $remainingTime }};
-            var countdownElement = document.getElementById('countdown');
-            var verifyButton = document.getElementById('verify-btn');
-
-            var countdownInterval = setInterval(function() {
-                remainingTime--;
-                countdownElement.innerHTML = formatTime(remainingTime);
-
-                if (remainingTime <= 0) {
-                    clearInterval(countdownInterval);
-                    countdownElement.style.display = 'none';
-                    verifyButton.disabled = true;
-                }
-            }, 1000);
-
-            function formatTime(time) {
-                var minutes = Math.floor(time / 60);
-                var seconds = time % 60;
-                return padNumber(minutes) + ":" + padNumber(seconds);
-            }
-
-            function padNumber(number) {
-                return (number < 10 ? "0" : "") + number;
-            }
-        </script>
-    @endif
 @endsection

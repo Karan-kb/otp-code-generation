@@ -18,6 +18,8 @@ Route::get('/verify', [HomeController::class, 'showVerifyPhoneOtp'])->name('show
 
 Route::get('/verify/{phone}', [HomeController::class, 'showVerifyPhoneOtp'])->name('show_verify_phone_otp');
 
+Route::get('/invalidate-otps', [HomeController::class, 'invalidateExpiredOtps'])->name('invalidate_otps');
+
 
 Route::get('/register', function () {
     return view('auth.register');
